@@ -2,6 +2,7 @@
 #include <iostream>
 #include <assert.h>
 #include <vector>
+
 struct A
 {
     int a=0;
