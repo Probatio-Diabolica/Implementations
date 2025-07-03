@@ -103,7 +103,7 @@ void manualDtorTest()
     std::cout << "\n[ MANUAL DESTRUCTOR TEST ]\n";
     resetSpy();
     shrPtr<Spy>* s = new shrPtr<Spy>(makeShr<Spy>(555));
-    s->~shrPtr(); 
+    delete s;
     assert(Spy::destroyed == 1);
 }
 
