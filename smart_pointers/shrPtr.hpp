@@ -1,44 +1,9 @@
 #ifndef SHRPTR_HPP
 #define SHRPTR_HPP
 
+#include "controlBlock.hpp"
 #include <cstdint>
 #include <utility>
-
-template<typename T>
-struct controlBlock
-{
-private:
-    T* m_resource;
-    std::uint64_t m_refCount=0;
-public:
-    controlBlock(T* ptr): m_resource(ptr),m_refCount(1){}
-
-    template <typename... Args>
-    controlBlock(Args&&... args)
-        : m_resource(new T(std::forward<Args>(args)...)), m_refCount(1)
-    {}
-        
-    std::uint64_t useCount() const
-    {
-            return m_refCount;
-    }
-
-    T* get() const
-    {
-        return m_resource;
-    }
-
-    void increment() {++m_refCount;}
-        
-    void decrement() 
-    {
-        if(--m_refCount == 0)
-        {
-            delete m_resource;
-            delete this;
-        }
-    }
-};
 
 template <typename T>
 class shrPtr
