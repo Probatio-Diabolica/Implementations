@@ -2,21 +2,35 @@
 #define SHRPTR_HPP
 
 #include "controlBlock.hpp"
-#include <cstdint>
 #include <utility>
+
+template<typename T>
+class weakPtr;
 
 template <typename T>
 class shrPtr
 {
 public:
     shrPtr() = default; 
+
     explicit shrPtr(T* ptr)
         : m_resource(ptr), m_ctrlBlk(new controlBlock(ptr)){}
-    
-    explicit shrPtr(controlBlock<T>* cb)
+   
+    //I scaled this constructor so that it can work for lock() 
+    //tho, this allows optional ref increment
+    explicit shrPtr(controlBlock<T>* cb, bool addRef)
+        : m_ctrlBlk(cb)
     {
-        m_ctrlBlk = cb;
-        if(m_ctrlBlk) m_resource = m_ctrlBlk->get();
+        if(m_ctrlBlk and m_ctrlBlk->useCount() > 0)
+        {
+            if(addRef) m_ctrlBlk->increment();
+            m_resource = m_ctrlBlk->get();
+        }
+        else 
+        {
+            m_ctrlBlk  = nullptr;
+            m_resource = nullptr;
+        }
     }
    
     //cpy conc
@@ -61,10 +75,12 @@ public:
         return *this;
     }
 
-    explicit operator bool() const
+    ~shrPtr()
     {
-        return m_resource != nullptr;
+        if(m_ctrlBlk) m_ctrlBlk->decrement();
     }
+
+    explicit operator bool() const { return m_resource != nullptr; }
 
     //swap
     void swap(shrPtr& other)
@@ -73,25 +89,25 @@ public:
         std::swap(other.m_ctrlBlk,m_ctrlBlk);
     }
 
-    T* get() const {return m_resource;}
+    T* get() const { return m_resource; }
 
-    T& operator *() const  {return *m_resource;}
+    T& operator *() const  { return *m_resource; }
 
-    T* operator ->() const {return get();}
+    T* operator ->() const { return get(); }
 
-    std::uint64_t useCount() const {return m_ctrlBlk->useCount();}
-
-    ~shrPtr()
+    std::uint64_t useCount() const 
     {
-        if(m_ctrlBlk) m_ctrlBlk->decrement();
+        return (m_ctrlBlk) ? m_ctrlBlk->useCount() : 0;
     }
+
 
     template<typename N, typename... Args>
     friend shrPtr<N> makeShr(Args&&... args);
 
+    template<typename N> 
+    friend class weakPtr;
+
 private:
-    
-    
     T* m_resource = nullptr;
     controlBlock<T>* m_ctrlBlk = nullptr;
 
@@ -104,7 +120,7 @@ shrPtr<N> makeShr(Args&&... args)
 {
     auto cv = new controlBlock<N>(std::forward<Args>(args)...);
 
-    return shrPtr<N> {cv};
+    return shrPtr<N> {cv,false};
 }
 
 #endif
