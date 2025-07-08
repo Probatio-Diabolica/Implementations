@@ -16,7 +16,6 @@ public:
     {
         if(m_ctrlBlk) m_ctrlBlk->incrementWeak();
     }
-    
 
     //cpy
     weakPtr(const weakPtr& other)
@@ -35,7 +34,6 @@ public:
     {
         if(this != &other)
         {
-
             release();
 
             m_ctrlBlk = other.m_ctrlBlk;
@@ -85,6 +83,5 @@ private:
         if(m_ctrlBlk) m_ctrlBlk->decrementWeak();
     }
 };
-
 
 #endif

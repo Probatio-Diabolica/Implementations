@@ -48,7 +48,7 @@ int main() {
         weakPtr<Track> w1(shared), w2(shared);
         assert(!w1.expired() && !w2.expired());
 
-        shared = shrPtr<Track>(); // Drop the last shared
+        shared = shrPtr<Track>(); //Just drop the last shared here and make me happy!!
         assert(w1.expired());
         assert(w2.expired());
     }
