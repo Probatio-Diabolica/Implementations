@@ -12,9 +12,6 @@ class shrPtr
 {
 public:
     shrPtr() = default; 
-
-    explicit shrPtr(T* ptr)
-        : m_resource(ptr), m_ctrlBlk(new controlBlock(ptr)){}
    
     //I scaled this constructor so that it can work for lock() 
     //tho, this allows optional ref increment
@@ -100,10 +97,6 @@ public:
         return (m_ctrlBlk) ? m_ctrlBlk->useCount() : 0;
     }
 
-
-    template<typename N, typename... Args>
-    friend shrPtr<N> makeShr(Args&&... args);
-
     template<typename N> 
     friend class weakPtr;
 
@@ -111,6 +104,7 @@ private:
     T* m_resource = nullptr;
     controlBlock<T>* m_ctrlBlk = nullptr;
 
+    explicit shrPtr(T* ptr) = delete;
 };
 
 

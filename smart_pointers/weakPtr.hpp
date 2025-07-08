@@ -35,7 +35,8 @@ public:
     {
         if(this != &other)
         {
-            if(m_ctrlBlk) m_ctrlBlk->decrementWeak();
+
+            release();
 
             m_ctrlBlk = other.m_ctrlBlk;
 
@@ -50,7 +51,7 @@ public:
     {
         if(this != &other)
         {
-            if(m_ctrlBlk) m_ctrlBlk->decrementWeak();
+            release();
 
             m_ctrlBlk = std::exchange(other.m_ctrlBlk, nullptr);
         }
@@ -66,14 +67,23 @@ public:
 
     bool expired() const {return !m_ctrlBlk or m_ctrlBlk->useCount()==0;}
 
+    void reset()
+    {
+        release();
+        m_ctrlBlk = nullptr;
+    }
     ~weakPtr()
     {
-        if(m_ctrlBlk) m_ctrlBlk->decrementWeak();
-        m_ctrlBlk = nullptr;
+        release();
     }
 
 private:
     controlBlock<T>* m_ctrlBlk = nullptr;
+
+    void release()
+    {
+        if(m_ctrlBlk) m_ctrlBlk->decrementWeak();
+    }
 };
 
 

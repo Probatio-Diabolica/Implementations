@@ -3,16 +3,21 @@
 #include<cstdint>
 #include<utility>   
 
+template<typename T>
+class shrPtr;
+
+template<typename T>
+class weakPtr;
+
 template <typename T>
 class controlBlock
 {
 public:
-    explicit controlBlock(T* ptr)
-    : m_resource(ptr),m_shrCount(1) {}
 
     template<typename... Args>
-    controlBlock(Args&&... args) 
-        : m_resource(new T(std::forward<Args>(args)...)),m_shrCount(1),m_weakCount(0) {}
+    explicit controlBlock(Args&&... args)
+        : m_resource(new T(std::forward<Args>(args)...)) 
+    {}
 
     std::uint64_t useCount() const { return m_shrCount; }
 
@@ -26,7 +31,7 @@ public:
         {
             delete m_resource;
             m_resource = nullptr;
-            if(m_weakCount == 0) delete this;
+            delSelf();
         }
     }
 
@@ -34,18 +39,27 @@ public:
     
     void decrementWeak()
     {
-        if(--m_weakCount == 0 and m_shrCount == 0) delete this;
+        --m_weakCount;
+        delSelf();
     }
     
-    ~controlBlock()
-    {
-        if(--m_weakCount==0 and m_shrCount==0) delete this;
-    }
-
+    ~controlBlock() = default;
+    
 private:
     T* m_resource;
     std::uint64_t m_shrCount = 1;
     std::uint64_t m_weakCount = 0;
+
+    void delSelf()
+    {
+        if(m_shrCount == 0 and m_weakCount == 0) delete this;
+    }
+
+    template<typename>
+    friend class shrPtr;
+
+    template<typename>
+    friend class weakPtr;
 };
 
 #endif
